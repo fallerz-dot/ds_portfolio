@@ -1,3 +1,3 @@
 # ds_portfolio 
 ### Welcome
-This is Zoe Faller's data science portfolio
+My name is Zoe Faller and I am a student at Simmons University 
