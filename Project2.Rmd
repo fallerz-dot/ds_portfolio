@@ -1,0 +1,151 @@
+---
+title: "Fueling Insights: Wrangling EPA Vehicle Data with Tidyverse"
+author: "Zoe Faller"
+date: "11/3/25"
+output: 
+  html_document:
+    code_folding: hide
+    theme: flatly
+    toc: true
+    toc_float: true
+    code_download: true
+---
+
+```{r, warning = FALSE, message = FALSE}
+# Load any R Packages you may need
+library(tidyverse)
+library(fueleconomy)
+library(ggplot2)
+
+
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+# Load any datasets you may need
+view(vehicles)
+```
+
+
+
+
+
+###  Complete Overview
+Data wrangling is the process of transforming raw data into a clean, structured format ready for analysis. In this tutorial, we’ll explore fuel economy data from the EPA using the `fueleconomy` R package. We'll walk through a tidyverse-powered pipeline to clean, reshape, and visualize the data, uncovering trends in vehicle efficiency over time.
+
+
+###  Dataset Overview
+
+The `vehicles` dataset from the `fueleconomy` package contains information on cars sold in the U.S. from 1985 to 2015. It includes variables like make, model, year, fuel type, transmission, and miles per gallon (MPG).
+
+
+
+### Wrangling Pipeline
+
+#### 1. Select Relevant Columns
+
+```{r}
+vehicles_clean <- vehicles %>%
+  select(year, make, model, fuel, trans, cty, hwy)
+```
+
+This step uses select() to keep only the variables we care about—like year, make, fuel type, and MPG, so the data set is easier to work with and focused on our analysis goals.
+
+
+
+#### 2. Filter for Recent Years
+
+```{r}
+vehicles_recent <- vehicles_clean %>%
+  filter(year >= 2010)
+```
+We use filter() to include only vehicles from 2010 onward, narrowing the scope to modern cars and making trends more relevant to current fuel efficiency.
+
+
+
+
+#### 3. Mutate: Create Average MPG
+
+```{r}
+vehicles_recent <- vehicles_recent %>%
+  mutate(avg_mpg = (cty + hwy) / 2)
+```
+With mutate(), we calculate a new column called avg_mpg by averaging city and highway MPG, giving us a single, more interpretable measure of fuel efficiency.
+
+#### 4. Handle Missing Data
+
+```{r}
+vehicles_recent <- vehicles_recent %>%
+  drop_na(avg_mpg, fuel)
+
+
+```
+We apply drop_na() to remove rows that are missing key values like MPG or fuel type, ensuring our analysis is based on complete and reliable data.
+
+#### 5. Summarize: Average MPG by Fuel Type
+
+```{r}
+mpg_by_fuel <- vehicles_recent %>%
+  group_by(fuel) %>%
+  summarize(mean_mpg = mean(avg_mpg), .groups = "drop") %>%
+  arrange(desc(mean_mpg))
+```
+Using group_by() and summarize(), we calculate the mean MPG for each fuel type, which helps us compare fuel efficiency across categories.
+
+
+
+
+#### 6. Use a Less-Common Function: `count()`
+
+```{r}
+fuel_counts <- vehicles_recent %>%
+  count(fuel, sort = TRUE)
+```
+The count() function gives us a quick summary of how many vehicles fall into each fuel type, adding context to our MPG comparisons.
+
+
+
+###  Visualization
+
+Let’s visualize how average MPG has changed over time for premium and diesel vehicles.
+
+``` {r}
+vehicles_recent %>%
+  filter(fuel %in% c("Premium", "Diesel")) %>%
+  group_by(year, fuel) %>%
+  summarize(mean_mpg = mean(avg_mpg), .groups = "drop") %>%
+  
+ggplot(aes(x = year, y = mean_mpg, color = fuel)) +geom_line(linewidth = 1.2) +labs( title = "Average MPG Over Time by Fuel Type", x = "Year", y = "Average MPG",color = "Fuel Type") +theme_minimal()
+
+```
+This step uses ggplot2 to create a line chart that shows how average MPG has changed over time for gasoline and diesel vehicles. By grouping the data by year and fuel type, then plotting the mean MPG, the graph reveals fuel efficiency trends and makes it easy to compare how these two fuel types have evolved from 2010 onward.
+
+
+
+### Insights
+
+This plot reveals that Premium vehicles have steadily improved in fuel efficiency since 2010, while diesel vehicles show more variability. Wrangling allowed us to clean and reshape the data to uncover these trends.
+
+
+### Wrap up
+
+In this tutorial we have demonstrated how to:
+
+- Select and filter relevant data
+
+- Create new variables
+
+- Handle missing values
+
+- Summarize and count observations
+
+- Visualize trends with ggplot2
+
+This wrangling pipeline transforms raw EPA data into meaningful insights about vehicle efficiency.
+
+
+
+
+
+
+
+
